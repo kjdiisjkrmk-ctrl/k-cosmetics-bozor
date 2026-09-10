@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHORSU — Bozor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14171D;
+    --surface: #1C212A;
+    --surface-2: #232A34;
+    --line: #2C333F;
+    --teal: #36A79C;
+    --teal-dim: #285E58;
+    --gold: #D9A64C;
+    --terracotta: #C4633C;
+    --text: #ECEEF1;
+    --text-dim: #93A0AC;
+    --text-faint: #5E6873;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3{ font-family: 'Space Grotesk', sans-serif; font-weight: 600; margin: 0; }
+  button{ font-family: inherit; cursor: pointer; }
+  ::-webkit-scrollbar{ display:none; }
+  * { scrollbar-width: none; }
+
+  #shell{
+    max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg);
+    position: relative; display:flex; flex-direction:column;
+    border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+  }
+
+  #topbar{ position: sticky; top:0; z-index:20; background: linear-gradient(180deg, var(--bg) 70%, rgba(20,23,29,0)); padding: 18px 16px 10px; }
+  .brand-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .brand{ display:flex; align-items:center; gap:9px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius: 9px;
+    background: conic-gradient(from 220deg, var(--teal), var(--gold), var(--terracotta), var(--teal));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; color:#101317; font-size:15px;
+  }
+  .brand-name{ font-size:19px; letter-spacing:0.2px; }
+  .brand-sub{ font-size:11px; color:var(--text-faint); margin-top:-2px; display:flex; align-items:center; gap:5px; }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; }
+  #admin-entry{
+    width:34px; height:34px; border-radius:9px; border:1px solid var(--line);
+    background:var(--surface); color:var(--text-dim); display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  #search-wrap{ position:relative; }
+  #search{ width:100%; padding: 12px 14px 12px 40px; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-size: 14px; outline:none; }
+  #search::placeholder{ color: var(--text-faint); }
+  #search-wrap::before{ content:"⌕"; position:absolute; left:13px; top:50%; transform:translateY(-52%); color: var(--text-faint); font-size:17px; }
+
+  #cats{ display:flex; gap:8px; overflow-x:auto; padding: 14px 16px 4px; }
+  .cat-chip{ flex: 0 0 auto; display:flex; flex-direction:column; align-items:center; gap:6px; width: 66px; padding: 10px 4px; border-radius: 12px; border:1px solid transparent; background: transparent; color: var(--text-dim); }
+  .cat-chip .ic{ width:42px; height:42px; border-radius:12px; background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:19px; border:1px solid var(--line); }
+  .cat-chip span{ font-size:10.5px; text-align:center; line-height:1.2; }
+  .cat-chip.active .ic{ background: var(--teal-dim); border-color: var(--teal); }
+  .cat-chip.active{ color: var(--text); }
+
+  #main{ flex:1; padding: 6px 16px 90px; overflow-y:auto; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin: 14px 2px 12px; }
+  .section-head h2{ font-size:17px; }
+  .section-head .count{ font-size:12px; color: var(--text-faint); }
+
+  #grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card{ background: var(--surface); border:1px solid var(--line); border-radius: var(--radius); overflow:hidden; display:flex; flex-direction:column; text-align:left; }
+  .card-img{ aspect-ratio: 1/0.9; display:flex; align-items:center; justify-content:center; font-size:34px; position:relative; overflow:hidden; }
+  .card-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .badge{ position:absolute; top:8px; left:8px; font-size:10px; font-weight:600; padding: 3px 8px; border-radius: 20px; color:#111; z-index:2; }
+  .badge.yangi{ background: var(--teal); color:#0B1210; }
+  .badge.chegirma{ background: var(--terracotta); color:#1A0E08; }
+  .fav-btn{ position:absolute; top:8px; right:8px; width:26px; height:26px; border-radius:50%; background: rgba(20,23,29,0.55); border:none; color:#fff; font-size:13px; display:flex; align-items:center; justify-content:center; z-index:2; }
+  .fav-btn.active{ color: var(--terracotta); }
+  .card-body{ padding: 10px 11px 12px; display:flex; flex-direction:column; gap:4px; }
+  .card-brand{ font-size:10px; color: var(--text-faint); text-transform:uppercase; letter-spacing:0.4px; }
+  .card-name{ font-size:12.5px; line-height:1.3; color:var(--text); min-height: 32px; }
+  .card-price{ font-size:14.5px; font-weight:700; color: var(--gold); margin-top:2px; }
+  .card-meta{ display:flex; justify-content:space-between; align-items:center; font-size:10.5px; color:var(--text-faint); }
+
+  .empty{ text-align:center; padding: 60px 20px; color: var(--text-faint); font-size:13px; }
+
+  #navbar{ position: sticky; bottom:0; z-index:20; display:flex; justify-content:space-around; align-items:center; padding: 10px 8px calc(10px + env(safe-area-inset-bottom)); background: rgba(28,33,42,0.92); backdrop-filter: blur(8px); border-top: 1px solid var(--line); }
+  .nav-btn{ background:none; border:none; color: var(--text-faint); display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; width: 64px; }
+  .nav-btn .ic{ font-size:19px; }
+  .nav-btn.active{ color: var(--teal); }
+
+  .overlay{ position:absolute; inset:0; z-index:40; background: var(--bg); display:flex; flex-direction:column; transform: translateY(100%); transition: transform .28s ease; }
+  .overlay.open{ transform: translateY(0); }
+  .ov-head{ display:flex; align-items:center; gap:12px; padding: 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:2; }
+  .back-btn{ width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--surface); color:var(--text); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .ov-body{ flex:1; overflow-y:auto; padding: 0 16px 40px; }
+
+  .p-hero{ margin: 16px -16px 0; aspect-ratio: 1/0.8; display:flex; align-items:center; justify-content:center; font-size: 60px; overflow:hidden; }
+  .p-hero img{ width:100%; height:100%; object-fit:cover; }
+  .p-badges{ display:flex; gap:8px; margin: 14px 0 6px; }
+  .p-brand{ font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.5px; margin-top:14px; }
+  .p-name{ font-size:20px; margin-top:4px; line-height:1.3; }
+  .p-price{ font-size:24px; color: var(--gold); font-weight:700; margin-top:10px; font-family:'Space Grotesk'; }
+  .p-desc{ font-size:13.5px; color: var(--text-dim); line-height:1.6; margin-top:14px; }
+  .p-actions{ display:flex; gap:10px; margin-top:18px; }
+  .btn-primary{ flex:1; background: var(--teal); color:#0B1210; border:none; border-radius:11px; padding:13px; font-weight:700; font-size:14px; }
+  .btn-ghost{ width:48px; border-radius:11px; border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:16px; }
+  .btn-ghost.active{ color: var(--terracotta); border-color: var(--terracotta); }
+
+  .divider{ height:1px; background:var(--line); margin: 22px 0; }
+
+  #comments-list{ display:flex; flex-direction:column; gap:14px; margin-top:14px; }
+  .comment{ display:flex; gap:10px; }
+  .c-avatar{ width:32px; height:32px; border-radius:50%; background:var(--surface-2); flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--teal); border:1px solid var(--line); }
+  .c-body{ flex:1; }
+  .c-top{ display:flex; justify-content:space-between; align-items:baseline; }
+  .c-name{ font-size:12.5px; font-weight:600; }
+  .c-date{ font-size:10.5px; color:var(--text-faint); }
+  .c-text{ font-size:13px; color:var(--text-dim); margin-top:3px; line-height:1.5; }
+  .no-comments{ font-size:12.5px; color:var(--text-faint); padding: 6px 0 4px; }
+
+  #comment-form{ display:flex; gap:8px; margin-top:16px; }
+  #comment-name, #comment-text{ background:var(--surface); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:10px 12px; font-size:13px; outline:none; font-family:inherit; }
+  #comment-name{ width: 92px; flex:0 0 auto; }
+  #comment-text{ flex:1; }
+  #comment-send{ width:40px; border-radius:10px; border:none; background:var(--teal); color:#0B1210; font-size:15px; }
+  #comment-send:disabled{ opacity:.5; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:11.5px; color:var(--text-dim); margin-bottom:6px; }
+  .field input, .field select, .field textarea{ width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:11px 12px; font-size:13.5px; font-family:inherit; outline:none; }
+  .field textarea{ resize:vertical; min-height:70px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .img-preview{ margin-top:8px; width:100%; aspect-ratio:16/9; border-radius:10px; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--text-faint); font-size:11px; }
+  .img-preview img{ width:100%; height:100%; object-fit:cover; }
+
+  .admin-list-item{ display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--line); border-radius:11px; margin-bottom:8px; background:var(--surface); }
+  .ali-ic{ width:38px; height:38px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; flex:0 0 auto; overflow:hidden; background:var(--surface-2); }
+  .ali-ic img{ width:100%; height:100%; object-fit:cover; }
+  .ali-info{ flex:1; min-width:0; }
+  .ali-name{ font-size:12.5px; }
+  .ali-meta{ font-size:10.5px; color:var(--text-faint); }
+  .ali-del{ background:none; border:none; color:var(--terracotta); font-size:16px; padding:4px 6px; }
+
+  .lock-screen{ display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 60px 24px; text-align:center; gap:14px; }
+  .lock-screen .ic{ font-size:34px; }
+  .lock-screen input{ width:100%; max-width:220px; background:var(--surface); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:11px 12px; text-align:center; font-size:14px; outline:none; }
+  .lock-screen button{ background:var(--teal); border:none; border-radius:10px; color:#0B1210; font-weight:700; padding:11px 20px; font-size:13px; }
+  .lock-err{ color:var(--terracotta); font-size:12px; min-height:14px; }
+
+  .toast{ position:absolute; left:50%; bottom:90px; transform:translateX(-50%) translateY(10px); background: var(--surface-2); border:1px solid var(--line); color:var(--text); padding:10px 16px; border-radius:10px; font-size:12.5px; opacity:0; pointer-events:none; transition: all .25s ease; z-index:60; max-width:85%; text-align:center; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.error{ border-color: var(--terracotta); color:#f0b39c; }
+
+  .config-warning{ margin:16px; padding:16px; border:1px solid var(--terracotta); border-radius:12px; background:rgba(196,99,60,0.08); font-size:12.5px; line-height:1.6; color:var(--text-dim); }
+  .config-warning b{ color:var(--text); }
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <div id="config-warning-slot"></div>
+
+  <div id="topbar">
+    <div class="brand-row">
+      <div class="brand">
+        <div class="brand-mark">CH</div>
+        <div>
+          <div class="brand-name">Chorsu</div>
+          <div class="brand-sub"><span class="live-dot"></span>jonli bozor</div>
+        </div>
+      </div>
+      <button id="admin-entry" onclick="openAdmin()">⚙</button>
+    </div>
+    <div id="search-wrap">
+      <input id="search" placeholder="Mahsulot qidirish..." oninput="onSearch(this.value)">
+    </div>
+    <div id="cats"></div>
+  </div>
+
+  <div id="main">
+    <div class="section-head">
+      <h2 id="section-title">Barcha mahsulotlar</h2>
+      <span class="count" id="section-count"></span>
+    </div>
+    <div id="grid"></div>
+  </div>
+
+  <div id="navbar">
+    <button class="nav-btn active" data-nav="home" onclick="setNav('home')"><span class="ic">⌂</span>Bosh</button>
+    <button class="nav-btn" data-nav="cats" onclick="focusCats()"><span class="ic">▦</span>Kategoriya</button>
+    <button class="nav-btn" data-nav="fav" onclick="setNav('fav')"><span class="ic">♥</span>Sevimli</button>
+    <button class="nav-btn" data-nav="admin" onclick="openAdmin()"><span class="ic">⚙</span>Admin</button>
+  </div>
+
+  <div class="overlay" id="product-overlay">
+    <div class="ov-head"><button class="back-btn" onclick="closeOverlay('product-overlay')">←</button><h3 style="font-size:14px;">Mahsulot</h3></div>
+    <div class="ov-body" id="product-body"></div>
+  </div>
+
+  <div class="overlay" id="admin-overlay">
+    <div class="ov-head"><button class="back-btn" onclick="closeOverlay('admin-overlay')">←</button><h3 style="font-size:14px;">Admin panel</h3></div>
+    <div class="ov-body" id="admin-body"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- Firebase SDK (compat, no build step required) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* =====================================================================
+   1) FIREBASE CONFIG — buni o'zingiznikiga almashtiring.
+   Firebase Console → Project settings → Your apps → (</>) ostidan oling.
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAyvhcvSmsAQqK5PVMWnI4GTmPQKip4Is0",
+  authDomain: "k-cosmetics.firebaseapp.com",
+  projectId: "k-cosmetics",
+  storageBucket: "k-cosmetics.firebasestorage.app",
+  messagingSenderId: "169618144979",
+  appId: "1:169618144979:web:15c3e2210e8da211fd5e26"
+};
+/* ===================================================================== */
+
+const CONFIG_IS_SET = firebaseConfig.apiKey !== "YOUR_API_KEY";
+let db = null;
+if (CONFIG_IS_SET) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} else {
+  document.getElementById('config-warning-slot').innerHTML = `
+    <div class="config-warning">
+      <b>Firebase sozlanmagan.</b> Yuqoridagi <code>firebaseConfig</code> qismini o'z loyihangizning
+      haqiqiy kalitlariga almashtiring, aks holda mahsulotlar va izohlar saqlanmaydi.
+    </div>`;
+}
+
+/* ---------------- static data ---------------- */
+const CATS = [
+  { id:'barchasi', label:'Barchasi', icon:'🛍️' },
+  { id:'notebook', label:'Noutbuklar', icon:'💻' },
+  { id:'erkaklar', label:'Erkaklar', icon:'👔' },
+  { id:'ayollar', label:'Ayollar', icon:'👗' },
+  { id:'bolalar', label:'Bolalar', icon:'🧸' },
+  { id:'kosmetika', label:'Kosmetika', icon:'💄' },
+  { id:'dorilar', label:'Dorilar', icon:'💊' },
+  { id:'oziqovqat', label:'Oziq-ovqat', icon:'🍏' },
+  { id:'uyjihoz', label:'Uy-jihozi', icon:'🏠' },
+  { id:'avto', label:'Avto', icon:'🚗' },
+  { id:'sovgalar', label:"Sovg'a", icon:'🎁' },
+  { id:'aviabilet', label:'Aviabilet', icon:'✈️' },
+  { id:'hujjat', label:'Hujjat', icon:'📄' },
+];
+const GRADIENTS = {
+  notebook:'linear-gradient(135deg,#233042,#161c26)', erkaklar:'linear-gradient(135deg,#2b2e3c,#181a22)',
+  ayollar:'linear-gradient(135deg,#3a2536,#1c1620)', bolalar:'linear-gradient(135deg,#2e3a2a,#181f16)',
+  kosmetika:'linear-gradient(135deg,#3a2a30,#1e161a)', dorilar:'linear-gradient(135deg,#203833,#131f1c)',
+  oziqovqat:'linear-gradient(135deg,#3a3320,#1e1a11)', uyjihoz:'linear-gradient(135deg,#2a3038,#161a1e)',
+  avto:'linear-gradient(135deg,#2c2620,#191510)', sovgalar:'linear-gradient(135deg,#3a2a1e,#1e1610)',
+  aviabilet:'linear-gradient(135deg,#1f2e3a,#12191f)', hujjat:'linear-gradient(135deg,#2a2a2e,#17171a)',
+  barchasi:'linear-gradient(135deg,#233042,#161c26)'
+};
+const ADMIN_PASS = 'chorsu2026';
+
+const SEED_PRODUCTS = [
+  {name:'X-Kraft magnit telefon ushlagich',category:'avto',price:185000,brand:'X-Kraft',badge:'yangi',image:'https://placehold.co/500x450/233042/93A0AC?text=Avto',desc:"Avtomobil salonlari uchun kuchli magnitli telefon ushlagich. O'rnatish 30 soniya, barcha telefon modellariga mos keladi."},
+  {name:'Mikrofibra tozalash sochig\u02bci',category:'uyjihoz',price:28000,brand:'CleanPro',badge:'chegirma',image:'https://placehold.co/500x450/2a3038/93A0AC?text=Uy',desc:'Iz qoldirmaydigan, yuqori namlik shimuvchi mikrofibra sochiq. Oyna, mebel va texnika uchun.'},
+  {name:'ProBook 14" noutbuk sumkasi',category:'notebook',price:210000,brand:'CarryLine',badge:null,image:'https://placehold.co/500x450/233042/93A0AC?text=Noutbuk',desc:"Suv o'tkazmaydigan mato, mustahkam fermuar, yon cho'ntaklar zaryadlovchi uchun."},
+  {name:'Klassik erkaklar ko\u02bcylagi',category:'erkaklar',price:165000,brand:'Urban Fit',badge:'yangi',image:'https://placehold.co/500x450/2b2e3c/93A0AC?text=Erkaklar',desc:'100% paxta mato, ofis va kundalik kiyim uchun qulay kesim.'},
+  {name:'Yozgi ayollar ko\u02bcylagi',category:'ayollar',price:145000,brand:'Nozanin',badge:'chegirma',image:'https://placehold.co/500x450/3a2536/93A0AC?text=Ayollar',desc:"Yengil shifon mato, keng yozgi fasonda."},
+  {name:'Bolalar konstruktor to\u02bcplami',category:'bolalar',price:98000,brand:'PlayBrick',badge:'yangi',image:'https://placehold.co/500x450/2e3a2a/93A0AC?text=Bolalar',desc:'120 dona, xavfsiz plastik material. 3 yoshdan oshgan bolalar uchun.'},
+  {name:'Vitamin C serum 30ml',category:'kosmetika',price:112000,brand:'GlowLab',badge:null,image:'https://placehold.co/500x450/3a2a30/93A0AC?text=Kosmetika',desc:'Teri tonusini tenglashtiradi, yorqinlik beradi.'},
+  {name:'Multivitamin kompleksi',category:'dorilar',price:76000,brand:'VitaPharm',badge:null,image:'https://placehold.co/500x450/203833/93A0AC?text=Dori',desc:"Kattalar uchun kunlik multivitamin, 60 dona tabletka."},
+  {name:'Organik asal 500g',category:'oziqovqat',price:65000,brand:'Tabiat',badge:'yangi',image:'https://placehold.co/500x450/3a3320/93A0AC?text=Asal',desc:'Farg\u02bcona vodiysidan tabiiy asal, qo\u02bcshimchalarsiz.'},
+  {name:'Toshkent — Istanbul chipta yordami',category:'aviabilet',price:1850000,brand:'SkyDesk',badge:null,image:'https://placehold.co/500x450/1f2e3a/93A0AC?text=Aviabilet',desc:'Rasmiy agentlik orqali chipta bron qilish xizmati.'},
+];
+
+/* ---------------- state ---------------- */
+let products = [];
+let currentComments = [];
+let favorites = JSON.parse(localStorage.getItem('chorsu_favorites') || '[]');
+let activeCat = 'barchasi';
+let searchQuery = '';
+let navMode = 'home';
+let adminUnlocked = false;
+let currentProductId = null;
+let commentsUnsub = null;
+
+/* ---------------- categories ---------------- */
+function renderCats(){
+  document.getElementById('cats').innerHTML = CATS.map(c => `
+    <button class="cat-chip ${activeCat===c.id?'active':''}" onclick="selectCat('${c.id}')">
+      <span class="ic">${c.icon}</span><span>${c.label}</span>
+    </button>`).join('');
+}
+function selectCat(id){ activeCat = id; navMode='home'; renderCats(); renderGrid(); updateNavActive(); }
+function focusCats(){ document.getElementById('cats').scrollIntoView({behavior:'smooth', block:'nearest'}); }
+
+/* ---------------- grid ---------------- */
+function fmtPrice(n){ return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' ') + " so'm"; }
+
+function currentList(){
+  let list = products;
+  if(navMode==='fav'){ list = list.filter(p=>favorites.includes(p.id)); }
+  else if(activeCat!=='barchasi'){ list = list.filter(p=>p.category===activeCat); }
+  if(searchQuery.trim()){
+    const q = searchQuery.trim().toLowerCase();
+    list = list.filter(p=> (p.name||'').toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q));
+  }
+  return list;
+}
+
+function cardImg(p){
+  if(p.image){ return `<img src="${p.image}" alt="" onerror="this.parentElement.innerHTML='${(p.name||'?').charAt(0)}'">`; }
+  return (p.name||'?').charAt(0);
+}
+
+function renderGrid(){
+  const list = currentList();
+  const title = document.getElementById('section-title');
+  const count = document.getElementById('section-count');
+  if(navMode==='fav'){ title.textContent = 'Sevimlilar'; }
+  else { title.textContent = activeCat==='barchasi' ? 'Barcha mahsulotlar' : CATS.find(c=>c.id===activeCat).label; }
+  count.textContent = list.length + ' ta';
+
+  const grid = document.getElementById('grid');
+  if(!CONFIG_IS_SET){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">Firebase sozlanmagani uchun mahsulotlar ko'rsatilmayapti.</div>`;
+    return;
+  }
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;">${navMode==='fav' ? "Hali sevimli mahsulot yo'q." : "Bu bo'limda mahsulot topilmadi."}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(p => `
+    <button class="card" onclick="openProduct('${p.id}')">
+      <div class="card-img" style="background:${GRADIENTS[p.category]||GRADIENTS.barchasi};">
+        ${p.badge ? `<span class="badge ${p.badge}">${p.badge==='yangi'?'Yangi':'Chegirma'}</span>` : ''}
+        <button class="fav-btn ${favorites.includes(p.id)?'active':''}" onclick="event.stopPropagation(); toggleFav('${p.id}')">♥</button>
+        ${cardImg(p)}
+      </div>
+      <div class="card-body">
+        <div class="card-brand">${p.brand||''}</div>
+        <div class="card-name">${p.name||''}</div>
+        <div class="card-price">${fmtPrice(p.price)}</div>
+        <div class="card-meta"><span>${CATS.find(c=>c.id===p.category)?.label||''}</span></div>
+      </div>
+    </button>`).join('');
+}
+
+function toggleFav(id){
+  if(favorites.includes(id)) favorites = favorites.filter(x=>x!==id);
+  else favorites.push(id);
+  localStorage.setItem('chorsu_favorites', JSON.stringify(favorites));
+  renderGrid();
+  if(document.getElementById('product-overlay').classList.contains('open')) renderProductBody(currentProductId);
+}
+
+/* ---------------- nav ---------------- */
+function setNav(mode){ navMode = mode; updateNavActive(); renderGrid(); }
+function updateNavActive(){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(navMode==='fav') document.querySelector('[data-nav="fav"]').classList.add('active');
+  else document.querySelector('[data-nav="home"]').classList.add('active');
+}
+function onSearch(v){ searchQuery = v; renderGrid(); }
+
+/* ---------------- product overlay + live comments ---------------- */
+function openProduct(id){
+  currentProductId = id;
+  renderProductBody(id);
+  document.getElementById('product-overlay').classList.add('open');
+  listenComments(id);
+}
+function closeOverlay(elId){
+  document.getElementById(elId).classList.remove('open');
+  if(elId==='product-overlay' && commentsUnsub){ commentsUnsub(); commentsUnsub = null; }
+}
+
+function renderProductBody(id){
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  const isFav = favorites.includes(id);
+  document.getElementById('product-body').innerHTML = `
+    <div class="p-hero" style="background:${GRADIENTS[p.category]||GRADIENTS.barchasi};">
+      ${p.image ? `<img src="${p.image}" alt="" onerror="this.style.display='none'">` : (p.name||'?').charAt(0)}
+    </div>
+    <div class="p-badges">${p.badge? `<span class="badge ${p.badge}" style="position:static;">${p.badge==='yangi'?'Yangi':'Chegirma'}</span>`:''}</div>
+    <div class="p-brand">${p.brand||''}</div>
+    <h1 class="p-name">${p.name||''}</h1>
+    <div class="p-price">${fmtPrice(p.price)}</div>
+    <p class="p-desc">${p.desc||''}</p>
+    <div class="p-actions">
+      <button class="btn-primary" onclick="showToast('Buyurtma so\\'rovi yuborildi')">Buyurtma berish</button>
+      <button class="btn-ghost ${isFav?'active':''}" onclick="toggleFav('${p.id}')">♥</button>
+    </div>
+    <div class="divider"></div>
+    <h3 style="font-size:14px;">Izohlar <span style="color:var(--text-faint); font-weight:400;" id="comment-count">(${currentComments.length})</span></h3>
+    <div id="comments-list"></div>
+    <form id="comment-form" onsubmit="return submitComment(event,'${p.id}')">
+      <input id="comment-name" placeholder="Ism" required maxlength="24">
+      <input id="comment-text" placeholder="Izoh yozing..." required maxlength="240">
+      <button id="comment-send" type="submit">➤</button>
+    </form>
+  `;
+  renderCommentsOnly();
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function renderCommentsOnly(){
+  const list = document.getElementById('comments-list');
+  const countEl = document.getElementById('comment-count');
+  if(!list) return;
+  if(countEl) countEl.textContent = `(${currentComments.length})`;
+  list.innerHTML = currentComments.length===0 ? '<div class="no-comments">Hali izoh yo\'q. Birinchi bo\'lib fikr qoldiring.</div>' :
+    currentComments.map(c => `
+      <div class="comment">
+        <div class="c-avatar">${(c.name||'?').trim().charAt(0).toUpperCase()}</div>
+        <div class="c-body">
+          <div class="c-top"><span class="c-name">${escapeHtml(c.name)}</span><span class="c-date">${c.date||''}</span></div>
+          <div class="c-text">${escapeHtml(c.text)}</div>
+        </div>
+      </div>`).join('');
+}
+
+function listenComments(productId){
+  if(!db) return;
+  if(commentsUnsub) commentsUnsub();
+  currentComments = [];
+  commentsUnsub = db.collection('products').doc(productId).collection('comments')
+    .orderBy('createdAt','asc')
+    .onSnapshot(snap=>{
+      currentComments = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderCommentsOnly();
+    }, err=>{ console.error(err); });
+}
+
+async function submitComment(ev, productId){
+  ev.preventDefault();
+  if(!db){ showToast('Firebase sozlanmagan', true); return false; }
+  const name = document.getElementById('comment-name').value.trim();
+  const text = document.getElementById('comment-text').value.trim();
+  if(!name || !text) return false;
+  const btn = document.getElementById('comment-send');
+  btn.disabled = true;
+  try{
+    await db.collection('products').doc(productId).collection('comments').add({
+      name, text,
+      date: new Date().toLocaleDateString('uz-UZ',{day:'2-digit',month:'2-digit',year:'numeric'}),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('comment-name').value='';
+    document.getElementById('comment-text').value='';
+  }catch(e){ showToast('Xatolik: izoh yuborilmadi', true); console.error(e); }
+  btn.disabled = false;
+  return false;
+}
+
+/* ---------------- admin ---------------- */
+function openAdmin(){ document.getElementById('admin-overlay').classList.add('open'); renderAdmin(); }
+
+function renderAdmin(){
+  const body = document.getElementById('admin-body');
+  if(!CONFIG_IS_SET){
+    body.innerHTML = `<div class="config-warning" style="margin:16px 0;">Avval yuqoridagi <b>firebaseConfig</b> qismini to'ldiring.</div>`;
+    return;
+  }
+  if(!adminUnlocked){
+    body.innerHTML = `
+      <div class="lock-screen">
+        <div class="ic">🔒</div>
+        <div>
+          <div style="font-size:15px; margin-bottom:4px;">Admin panelga kirish</div>
+          <div style="font-size:12px; color:var(--text-faint);">Mahsulot joylash uchun parolni kiriting</div>
+        </div>
+        <input id="admin-pass" type="password" placeholder="Parol" onkeydown="if(event.key==='Enter')tryUnlock()">
+        <div class="lock-err" id="lock-err"></div>
+        <button onclick="tryUnlock()">Kirish</button>
+      </div>`;
+    return;
+  }
+  const catOptions = CATS.filter(c=>c.id!=='barchasi').map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  body.innerHTML = `
+    <h3 style="font-size:15px; margin:16px 0 4px;">Yangi mahsulot qo'shish</h3>
+    <p style="font-size:12px; color:var(--text-faint); margin:0 0 16px;">Ma'lumotlar Firestore bazasiga saqlanadi va saytga kirgan har bir kishiga jonli ko'rinadi.</p>
+    <form id="admin-form" onsubmit="return submitProduct(event)">
+      <div class="field"><label>Mahsulot nomi</label><input id="f-name" required maxlength="70" placeholder="Masalan: Wireless quloqchin"></div>
+      <div class="field-row">
+        <div class="field"><label>Kategoriya</label><select id="f-cat">${catOptions}</select></div>
+        <div class="field"><label>Narx (so'm)</label><input id="f-price" type="number" min="0" required placeholder="150000"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Brend</label><input id="f-brand" maxlength="30" placeholder="Masalan: X-Kraft"></div>
+        <div class="field"><label>Belgi</label>
+          <select id="f-badge"><option value="">Yo'q</option><option value="yangi">Yangi</option><option value="chegirma">Chegirma</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Rasm URL manzili</label>
+        <input id="f-image" type="url" placeholder="https://..." oninput="previewImage(this.value)">
+        <div class="img-preview" id="img-preview">rasm oldindan ko'rinishi</div>
+      </div>
+      <div class="field"><label>Tavsif</label><textarea id="f-desc" maxlength="300" placeholder="Mahsulot haqida qisqacha..."></textarea></div>
+      <button class="btn-primary" type="submit" style="width:100%; margin-top:6px;">Mahsulotni joylash</button>
+    </form>
+    <div class="divider"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <h3 style="font-size:15px;">Mavjud mahsulotlar (${products.length})</h3>
+      ${products.length===0 ? `<button class="ali-del" style="color:var(--teal); font-size:11px;" onclick="seedDefaults()">Namuna to'ldirish</button>` : ''}
+    </div>
+    <div id="admin-list"></div>
+  `;
+  renderAdminList();
+}
+
+function previewImage(url){
+  const box = document.getElementById('img-preview');
+  if(!url){ box.innerHTML = "rasm oldindan ko'rinishi"; return; }
+  box.innerHTML = `<img src="${url}" onerror="this.parentElement.textContent='rasm yuklanmadi'">`;
+}
+
+function renderAdminList(){
+  const wrap = document.getElementById('admin-list');
+  wrap.innerHTML = products.map(p=>`
+    <div class="admin-list-item">
+      <div class="ali-ic">${p.image ? `<img src="${p.image}">` : (p.name||'?').charAt(0)}</div>
+      <div class="ali-info">
+        <div class="ali-name">${p.name}</div>
+        <div class="ali-meta">${CATS.find(c=>c.id===p.category)?.label||''} · ${fmtPrice(p.price)}</div>
+      </div>
+      <button class="ali-del" onclick="deleteProduct('${p.id}')">✕</button>
+    </div>`).join('');
+}
+
+function tryUnlock(){
+  const val = document.getElementById('admin-pass').value;
+  if(val === ADMIN_PASS){ adminUnlocked = true; renderAdmin(); }
+  else{ document.getElementById('lock-err').textContent = "Parol noto'g'ri"; }
+}
+
+async function submitProduct(ev){
+  ev.preventDefault();
+  if(!db) return false;
+  const name = document.getElementById('f-name').value.trim();
+  const category = document.getElementById('f-cat').value;
+  const price = parseInt(document.getElementById('f-price').value,10) || 0;
+  const brand = document.getElementById('f-brand').value.trim() || "Noma'lum";
+  const badge = document.getElementById('f-badge').value || null;
+  const image = document.getElementById('f-image').value.trim() || null;
+  const desc = document.getElementById('f-desc').value.trim() || "Tavsif kiritilmagan.";
+  try{
+    await db.collection('products').add({ name, category, price, brand, badge, image, desc, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('admin-form').reset();
+    document.getElementById('img-preview').innerHTML = "rasm oldindan ko'rinishi";
+    showToast('Mahsulot joylandi');
+  }catch(e){ showToast('Xatolik: joylanmadi', true); console.error(e); }
+  return false;
+}
+
+async function deleteProduct(id){
+  if(!db) return;
+  try{ await db.collection('products').doc(id).delete(); showToast("Mahsulot o'chirildi"); }
+  catch(e){ showToast('Xatolik: o\'chirilmadi', true); }
+}
+
+async function seedDefaults(){
+  if(!db) return;
+  showToast('Namuna mahsulotlar yuklanmoqda...');
+  for(const p of SEED_PRODUCTS){
+    await db.collection('products').add({ ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  }
+  showToast('Tayyor!');
+}
+
+/* ---------------- toast ---------------- */
+let toastTimer=null;
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ---------------- init: live products listener ---------------- */
+function init(){
+  renderCats();
+  if(!CONFIG_IS_SET){ renderGrid(); return; }
+  document.getElementById('grid').innerHTML = '<div class="empty" style="grid-column:1/-1;">Yuklanmoqda...</div>';
+  db.collection('products').orderBy('createdAt','desc').onSnapshot(snap=>{
+    products = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderGrid();
+    if(adminUnlocked && document.getElementById('admin-list')) renderAdminList();
+  }, err=>{
+    console.error(err);
+    document.getElementById('grid').innerHTML = '<div class="empty" style="grid-column:1/-1;">Bazaga ulanishda xatolik. Firestore qoidalarini va kalitlarni tekshiring.</div>';
+  });
+}
+init();
+</script>
+</body>
+</html>
